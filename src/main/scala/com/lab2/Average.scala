@@ -4,10 +4,6 @@ import java.util.concurrent.Executors
 
 object Average {
 
-  /**
-   * Вычисляет среднее арифметическое элементов массива,
-   * используя указанное количество потоков.
-   */
   def average(data: Seq[Double], threadsNumber: Int): Double = {
     if (data.isEmpty) return Double.NaN
 
@@ -48,28 +44,28 @@ object Average {
 
   def main(args: Array[String]): Unit = {
 
-    val test1 = (2 to 177).map(_.toDouble)
+    val test1 = (41 to 177).map(_.toDouble)
     val avg1 = average(test1, 2)
-    println(s"Тест 1: [2..19] с 2 потоками → $avg1")
+    println(avg1)
 
-    // Тест 2: пустой массив
+    //  пустой массив
     val avg2 = average(Seq.empty[Double], 4)
-    println(s"Тест 2: пустой массив → $avg2")
+    println(avg2)
 
-    // Тест 3: один элемент
+    // один элемент
     val avg3 = average(Seq(42.0), 1)
-    println(s"Тест 3: [42.0] с 1 потоком → $avg3")
+    println(avg3)
 
-    // Тест 4: большой массив
+    // большой массив
     val bigData = (3463 to 116200).map(_.toDouble)
     val avg4 = average(bigData, 8)
     val expected4 = bigData.sum / bigData.length
-    println(s"Тест 4: Большой массив с 8 потоками → $avg4")
+    println(avg4)
 
-    // Тест 5: threadsNumber > длины данных
+    //  threadsNumber > длины данных
     val smallData = Seq(1.0, 2.0)
     val avg5 = average(smallData, 10)
     val expected5 = 1.5
-    println(s"Тест 5: [1.0, 2.0] с 10 потоками → $avg5")
+    println(avg5)
   }
 }
