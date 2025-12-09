@@ -1,4 +1,6 @@
-import java.util.concurrent.{Callable, Executors}
+import scala.concurrent.{Await, Future, ExecutionContext}
+import scala.concurrent.duration._
+import java.util.concurrent.Executors
 
 object Average {
 
@@ -12,38 +14,43 @@ object Average {
     val chunkSize = math.max(1, data.length / threadsNumber)
     val chunks = data.grouped(chunkSize).toList
 
-    val executor = Executors.newFixedThreadPool(threadsNumber)
+    val executorService = Executors.newFixedThreadPool(threadsNumber)
+    implicit val ec: ExecutionContext = ExecutionContext.fromExecutorService(executorService)
+
     try {
-      val callables = chunks.map { chunk =>
-        new Callable[(Double, Int)] {
-          override def call(): (Double, Int) = {
-            (chunk.sum, chunk.length)
-          }
+      val futures: List[Future[(Double, Int)]] = chunks.map { chunk =>
+        Future {
+          (chunk.sum, chunk.length)
         }
       }
 
-      val futures = callables.map(executor.submit)
+
+      val combinedFuture: Future[List[(Double, Int)]] = Future.sequence(futures)
+
+
+      val results: List[(Double, Int)] = Await.result(combinedFuture, Duration.Inf)
+
+
       var totalSum = 0.0
       var totalCount = 0
 
-      futures.foreach { future =>
-        val (sum, count) = future.get()
+      results.foreach { case (sum, count) =>
         totalSum += sum
         totalCount += count
       }
 
       totalSum / totalCount
     } finally {
-      executor.shutdown()
+
+      executorService.shutdown()
     }
   }
 
   def main(args: Array[String]): Unit = {
 
-    // Тест 1: базовый случай
-    val test1 = (1 to 10).map(_.toDouble)
+    val test1 = (2 to 177).map(_.toDouble)
     val avg1 = average(test1, 2)
-    println(s"Тест 1: [1..10] с 2 потоками → $avg1")
+    println(s"Тест 1: [2..19] с 2 потоками → $avg1")
 
     // Тест 2: пустой массив
     val avg2 = average(Seq.empty[Double], 4)
@@ -54,7 +61,7 @@ object Average {
     println(s"Тест 3: [42.0] с 1 потоком → $avg3")
 
     // Тест 4: большой массив
-    val bigData = (3463 to 100000).map(_.toDouble)
+    val bigData = (3463 to 116200).map(_.toDouble)
     val avg4 = average(bigData, 8)
     val expected4 = bigData.sum / bigData.length
     println(s"Тест 4: Большой массив с 8 потоками → $avg4")
@@ -64,6 +71,5 @@ object Average {
     val avg5 = average(smallData, 10)
     val expected5 = 1.5
     println(s"Тест 5: [1.0, 2.0] с 10 потоками → $avg5")
-
   }
 }
